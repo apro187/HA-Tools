@@ -50,7 +50,12 @@ def log(msg: str):
     print(f"[{now}] {msg}", flush=True)
 
 def load_ha_config(ha_path):
-    config_path = os.path.join(ha_path, 'ha_config.json')
+    # Look for config.json in ~/Documents/HA-Tools/config/config.json by default
+    default_config = os.path.expanduser('~/Documents/HA-Tools/config/config.json')
+    config_path = os.path.join(ha_path, 'config.json') if os.path.exists(os.path.join(ha_path, 'config.json')) else default_config
+    if not os.path.exists(config_path):
+        print_error(f"Config file not found at {config_path}")
+        exit(1)
     with open(config_path, 'r') as f:
         return json.load(f)
 
@@ -128,17 +133,13 @@ async def monitor(url: str, token: str, timeout: float,
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--ha-path", type=str, default=os.environ.get('HA_CONFIG_PATH'),
-                   help="Path to Home Assistant config directory (required)")
+    p.add_argument("--ha-path", type=str, default=os.path.expanduser('~/Documents/HA-Tools/config'),
+                   help="Path to Home Assistant config directory (default: ~/Documents/HA-Tools/config)")
     p.add_argument("--timeout", type=float, default=3,
                    help="Seconds to wait before fetching trace")
     p.add_argument("--include", help="Comma-separated list of automations to watch")
     p.add_argument("--exclude", help="Comma-separated list of automations to ignore")
     args = p.parse_args()
-
-    if not args.ha_path:
-        print_error('You must specify --ha-path or set the HA_CONFIG_PATH environment variable.')
-        exit(1)
 
     ha_config = load_ha_config(args.ha_path)
     url = ha_config['HA_URL'].replace('https://', 'wss://').replace('http://', 'ws://')

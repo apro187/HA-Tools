@@ -4,8 +4,9 @@
 Push a local YAML automation or script to Home Assistant via the REST API, with optional reload and linting.
 
 ## Usage
+
 ```bash
-python src/push_automation.py [OPTIONS]
+push-automation [OPTIONS]
 ```
 
 | Option                | Type   | Default      | Description                                 |
@@ -16,12 +17,13 @@ python src/push_automation.py [OPTIONS]
 | `--push-file`         | str    | (optional)   | Push a single automation/script YAML file    |
 | `--auto-overwrite`    | flag   | false        | Auto-accept all confirmation prompts         |
 
-> Tip: run `python src/push_automation.py --help` to see the full list.
+> Tip: run `push-automation --help` to see the full list.
 
 ## Example
 
+
 ```bash
-python src/push_automation.py --ha-path ~/ha-config --automations-dir ~/automations --scripts-dir ~/scripts --push-file my_automation.yaml --auto-overwrite
+push-automation --ha-path ~/ha-config --automations-dir ~/automations --scripts-dir ~/scripts --push-file my_automation.yaml --auto-overwrite
 ```
 
 ### Sample output

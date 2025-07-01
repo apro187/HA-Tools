@@ -4,8 +4,9 @@
 Fetches recent Home Assistant automation/script trace errors using the WebSocket API.
 
 ## Usage
+
 ```bash
-python src/get_recent_trace_errors.py [OPTIONS]
+get-recent-trace-errors [OPTIONS]
 ```
 
 | Option              | Type   | Default    | Description                                 |
@@ -15,12 +16,13 @@ python src/get_recent_trace_errors.py [OPTIONS]
 | `--automations-dir` | str    | (optional) | Path to your automations YAML folder         |
 | `--scripts-dir`     | str    | (optional) | Path to your scripts YAML folder             |
 
-> Tip: run `python src/get_recent_trace_errors.py --help` to see the full list.
+> Tip: run `get-recent-trace-errors --help` to see the full list.
 
 ## Example
 
+
 ```bash
-python src/get_recent_trace_errors.py --ha-path ~/ha-config --minutes 30
+get-recent-trace-errors --ha-path ~/ha-config --minutes 30
 ```
 
 ### Sample output

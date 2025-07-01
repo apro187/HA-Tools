@@ -16,8 +16,11 @@ python -m venv .venv && source .venv/bin/activate
 # install local dependencies
 pip install -r requirements.txt
 
-# first run: push an automation & reload HA
-python src/push_automation.py --file examples/my_automation.yaml --reload
+# first run: run the setup script (creates folders and pulls your automations/scripts from Home Assistant)
+setup-ha-tools
+
+# after setup, push an automation & reload HA
+push-automation --push-file examples/my_automation.yaml --reload
 ```
 
 > **Tip:** once everything works locally, install with **pipx** so the CLIs are on your `$PATH`: `pipx install --editable .`
@@ -73,11 +76,17 @@ graph LR
 
 ---
 
-## 🔐 Configuration File
+## 🔐 Configuration & Initial Pull
 
-- By default: `.ha-tools-config/config.json` in the parent directory of your automations/scripts
+- By default: `config/config.json` in your `~/Documents/HA-Tools` directory
 - Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
 - Never in the repo/project folder
+
+**Setup script features:**
+- Prompts for your Home Assistant URL, token, and preferred folders
+- Creates the folders (`config/`, `automations/`, `scripts/`, `logs/`) if they don't exist
+- After setup, automatically pulls all automations and scripts from your Home Assistant instance and saves them locally
+- All fields are set by the setup script and can be updated by re-running it
 
 **Config file structure:**
 The `config.json` file is a simple JSON object with the following keys:
@@ -88,11 +97,12 @@ The `config.json` file is a simple JSON object with the following keys:
   "HA_TOKEN": "<your long-lived access token>",
   "HA_PATH": "<path to your Home Assistant config directory>",
   "AUTOMATIONS_DIR": "<path to your automations directory>",
-  "SCRIPTS_DIR": "<path to your scripts directory>"
+  "SCRIPTS_DIR": "<path to your scripts directory>",
+  "LOGS_DIR": "<path to your logs directory>",
+  "PRINTS_DIR": "<path to your prints directory>"
 }
 ```
-- All fields are set by the setup script and can be updated by re-running it.
-- `AUTOMATIONS_DIR` and `SCRIPTS_DIR` may be blank if you use default locations.
+---
 
 ---
 

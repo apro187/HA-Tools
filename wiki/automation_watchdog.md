@@ -4,8 +4,9 @@
 Watches Home Assistant automations in real time and reports failures using the WebSocket API.
 
 ## Usage
+
 ```bash
-python src/automation_watchdog.py [OPTIONS]
+automation-watchdog [OPTIONS]
 ```
 
 | Option         | Type   | Default    | Description                                 |
@@ -15,12 +16,13 @@ python src/automation_watchdog.py [OPTIONS]
 | `--include`    | str    | (optional) | Comma-separated list of automations to watch |
 | `--exclude`    | str    | (optional) | Comma-separated list of automations to ignore|
 
-> Tip: run `python src/automation_watchdog.py --help` to see the full list.
+> Tip: run `automation-watchdog --help` to see the full list.
 
 ## Example
 
+
 ```bash
-python src/automation_watchdog.py --ha-path ~/ha-config --timeout 5 --include automation.kitchen_lights
+automation-watchdog --ha-path ~/ha-config --timeout 5 --include automation.kitchen_lights
 ```
 
 ### Sample output

@@ -4,8 +4,9 @@
 Generates documentation for observed Home Assistant entity states based on ha_entities.json. Useful for auditing, refactoring, or documenting custom/unknown states.
 
 ## Usage
+
 ```bash
-python src/generate_entity_state_doc.py [OPTIONS]
+generate-entity-state-doc [OPTIONS]
 ```
 
 | Option              | Type   | Default    | Description                                 |
@@ -14,12 +15,13 @@ python src/generate_entity_state_doc.py [OPTIONS]
 | `--automations-dir` | str    | (optional) | Path to your automations YAML folder         |
 | `--scripts-dir`     | str    | (optional) | Path to your scripts YAML folder             |
 
-> Tip: run `python src/generate_entity_state_doc.py --help` to see the full list.
+> Tip: run `generate-entity-state-doc --help` to see the full list.
 
 ## Example
 
+
 ```bash
-python src/generate_entity_state_doc.py --ha-path ~/ha-config
+generate-entity-state-doc --ha-path ~/ha-config
 ```
 
 ### Sample output

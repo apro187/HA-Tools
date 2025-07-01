@@ -4,8 +4,9 @@
 Fetches all Home Assistant entities and their states via the REST API and writes them to ha_entities.json.
 
 ## Usage
+
 ```bash
-python src/get_ha_entities.py [OPTIONS]
+get-ha-entities [OPTIONS]
 ```
 
 | Option              | Type   | Default    | Description                                 |
@@ -14,12 +15,13 @@ python src/get_ha_entities.py [OPTIONS]
 | `--automations-dir` | str    | (optional) | Path to your automations YAML folder         |
 | `--scripts-dir`     | str    | (optional) | Path to your scripts YAML folder             |
 
-> Tip: run `python src/get_ha_entities.py --help` to see the full list.
+> Tip: run `get-ha-entities --help` to see the full list.
 
 ## Example
 
+
 ```bash
-python src/get_ha_entities.py --ha-path ~/ha-config
+get-ha-entities --ha-path ~/ha-config
 ```
 
 ### Sample output

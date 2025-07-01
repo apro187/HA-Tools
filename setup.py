@@ -14,8 +14,13 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            # Add tool entry points here, e.g.:
-            # "push-automation=ha_tools.push_automation:main",
+            "push-automation=push_automation:main",
+            "get-ha-entities=get_ha_entities:main",
+            "get-recent-trace-errors=get_recent_trace_errors:main",
+            "generate-entity-state-doc=generate_entity_state_doc:main",
+            "automation-watchdog=automation_watchdog:main",
+            "decompose-automations=decompose_automations:main",
+            "setup-ha-tools=setup_ha_tools:main",
         ]
     },
     python_requires=">=3.9",

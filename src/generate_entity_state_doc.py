@@ -27,31 +27,23 @@ import argparse
 # Load entities from ha_entities.json
 
 def load_entities(ha_path, scripts_dir=None, automations_dir=None):
-    # Prefer user-specified scripts_dir/automations_dir if provided
-    paths = []
-    if automations_dir:
-        paths.append(os.path.join(automations_dir, 'ha_entities.json'))
-    if scripts_dir:
-        paths.append(os.path.join(scripts_dir, 'ha_entities.json'))
-    paths.append(os.path.join(ha_path, 'ha_entities.json'))
-    for entities_path in paths:
-        if os.path.exists(entities_path):
-            with open(entities_path, 'r') as f:
-                return json.load(f)
-    print("ha_entities.json not found. Run get_ha_entities.py first.")
-    exit(1)
+    # Prefer ha_entities.json in ~/Documents/HA-Tools/config/ha_entities.json
+    default_entities = os.path.expanduser('~/Documents/HA-Tools/config/ha_entities.json')
+    entities_path = os.path.join(ha_path, 'ha_entities.json') if os.path.exists(os.path.join(ha_path, 'ha_entities.json')) else default_entities
+    if not os.path.exists(entities_path):
+        print("ha_entities.json not found. Run get_ha_entities.py first.")
+        exit(1)
+    with open(entities_path, 'r') as f:
+        return json.load(f)
 
 # ...existing code...
 # Add argparse for ha_path
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate documentation for Home Assistant entity states.")
-    parser.add_argument('--ha-path', type=str, default=os.environ.get('HA_CONFIG_PATH'),
-                        help='Path to Home Assistant config directory (required)')
+    parser.add_argument('--ha-path', type=str, default=os.path.expanduser('~/Documents/HA-Tools/config'),
+                        help='Path to Home Assistant config directory (default: ~/Documents/HA-Tools/config)')
     parser.add_argument('--automations-dir', type=str, help='Path to your automations YAML folder (optional)')
     parser.add_argument('--scripts-dir', type=str, help='Path to your scripts YAML folder (optional)')
     args = parser.parse_args()
-    if not args.ha_path:
-        print('You must specify --ha-path or set the HA_CONFIG_PATH environment variable.')
-        exit(1)
     entities = load_entities(args.ha_path, scripts_dir=args.scripts_dir, automations_dir=args.automations_dir)
     # ...rest of script unchanged...

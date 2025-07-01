@@ -4,8 +4,9 @@
 Interactive setup script for ha-tools. Prompts for Home Assistant URL, API token, and local automations/scripts directories, and writes config securely.
 
 ## Usage
+
 ```bash
-python src/setup_ha_tools.py
+setup-ha-tools
 ```
 
 | Option | Type | Default | Description |
@@ -16,8 +17,9 @@ python src/setup_ha_tools.py
 
 ## Example
 
+
 ```bash
-python src/setup_ha_tools.py
+setup-ha-tools
 ```
 
 ### Sample output

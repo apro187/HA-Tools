@@ -63,14 +63,19 @@ def get_yaml_files_from_dirs(dirs, automations_dir=None, scripts_dir=None):
     return files
 
 def load_ha_config(ha_path):
-    config_path = os.path.join(ha_path, 'ha_config.json')
+    # Look for config.json in ~/Documents/HA-Tools/config/config.json by default
+    default_config = os.path.expanduser('~/Documents/HA-Tools/config/config.json')
+    config_path = os.path.join(ha_path, 'config.json') if os.path.exists(os.path.join(ha_path, 'config.json')) else default_config
+    if not os.path.exists(config_path):
+        print_error(f"Config file not found at {config_path}")
+        exit(1)
     with open(config_path, 'r') as f:
         return json.load(f)
 
 def main():
     parser = argparse.ArgumentParser(description="Push Home Assistant automations/scripts to your HA instance.")
-    parser.add_argument('--ha-path', type=str, default=os.environ.get('HA_CONFIG_PATH'),
-                        help='Path to Home Assistant config or automations/scripts directory (required)')
+    parser.add_argument('--ha-path', type=str, default=os.path.expanduser('~/Documents/HA-Tools/config'),
+                        help='Path to Home Assistant config directory (default: ~/Documents/HA-Tools/config)')
     parser.add_argument('--automations-dir', type=str, help='Path to your automations YAML folder (optional)')
     parser.add_argument('--scripts-dir', type=str, help='Path to your scripts YAML folder (optional)')
     parser.add_argument('--push-file', type=str, help='Push a single automation/script YAML file')
@@ -80,24 +85,22 @@ def main():
     global AUTO_OVERWRITE
     AUTO_OVERWRITE = args.auto_overwrite
 
-    if not args.ha_path:
-        print_error('You must specify --ha-path or set the HA_CONFIG_PATH environment variable.')
-        exit(1)
-
     ha_path = args.ha_path
+    ha_config = load_ha_config(ha_path)
+
+    automations_dir = args.automations_dir or ha_config.get('AUTOMATIONS_DIR') or os.path.expanduser('~/Documents/HA-Tools/automations')
+    scripts_dir = args.scripts_dir or ha_config.get('SCRIPTS_DIR') or os.path.expanduser('~/Documents/HA-Tools/scripts')
 
     if args.push_file:
         push_file_quiet(args.push_file, auto_overwrite=AUTO_OVERWRITE, ha_path=ha_path)
         return
 
-    # If user provides automations/scripts dir, use those, else use standard subfolders
-    src_dirs = input("Enter source directories for automations/scripts (comma-separated): ").strip()
-    dir_list = [os.path.join(ha_path, d.strip()) if not os.path.isabs(d.strip()) else d.strip() for d in src_dirs.split(',') if d.strip()]
-    files = get_yaml_files_from_dirs(dir_list, automations_dir=args.automations_dir, scripts_dir=args.scripts_dir)
+    # Use automations_dir and scripts_dir as sources
+    src_dirs = [automations_dir, scripts_dir]
+    files = get_yaml_files_from_dirs(src_dirs, automations_dir=automations_dir, scripts_dir=scripts_dir)
     if not files:
         print_error("No YAML files found.")
         return
-    ha_config = load_ha_config(ha_path)
 
 def push_file_quiet(filepath, auto_overwrite=False, ha_path=None):
     if not ha_path:

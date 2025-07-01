@@ -28,19 +28,14 @@ import argparse
 from dateutil import parser, tz
 
 def load_ha_config(ha_path, automations_dir=None, scripts_dir=None):
-    # Prefer user-specified automations_dir/scripts_dir if provided
-    paths = []
-    if automations_dir:
-        paths.append(os.path.join(automations_dir, 'ha_config.json'))
-    if scripts_dir:
-        paths.append(os.path.join(scripts_dir, 'ha_config.json'))
-    paths.append(os.path.join(ha_path, 'ha_config.json'))
-    for config_path in paths:
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                return json.load(f)
-    print('ha_config.json not found.')
-    exit(1)
+    # Prefer config.json in ~/Documents/HA-Tools/config/config.json
+    default_config = os.path.expanduser('~/Documents/HA-Tools/config/config.json')
+    config_path = os.path.join(ha_path, 'config.json') if os.path.exists(os.path.join(ha_path, 'config.json')) else default_config
+    if not os.path.exists(config_path):
+        print('config.json not found.')
+        exit(1)
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 async def get_trace(ws, domain: str, item_id: str, run_id: str) -> dict:
     await ws.send(json.dumps({
@@ -132,15 +127,12 @@ async def main_async(ha_path, minutes=10, automations_dir=None, scripts_dir=None
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch recent Home Assistant automation/script trace errors via WebSocket API.")
-    parser.add_argument('--ha-path', type=str, default=os.environ.get('HA_CONFIG_PATH'),
-                        help='Path to Home Assistant config directory (required)')
+    parser.add_argument('--ha-path', type=str, default=os.path.expanduser('~/Documents/HA-Tools/config'),
+                        help='Path to Home Assistant config directory (default: ~/Documents/HA-Tools/config)')
     parser.add_argument('--minutes', type=int, default=10, help='How many minutes back to check for errors (default: 10)')
     parser.add_argument('--automations-dir', type=str, help='Path to your automations YAML folder (optional)')
     parser.add_argument('--scripts-dir', type=str, help='Path to your scripts YAML folder (optional)')
     args = parser.parse_args()
-    if not args.ha_path:
-        print('You must specify --ha-path or set the HA_CONFIG_PATH environment variable.')
-        exit(1)
     asyncio.run(main_async(args.ha_path, minutes=args.minutes, automations_dir=args.automations_dir, scripts_dir=args.scripts_dir))
 
 if __name__ == "__main__":
