@@ -41,13 +41,17 @@ def check_ha_token(ha_url, ha_token):
 
 # Get the default path for storing secrets/config (never in the project folder)
 def get_default_secrets_path():
-    # Use XDG_CONFIG_HOME or ~/.config/ha-tools/config.json (Linux/macOS), or %APPDATA%\ha-tools\config.json (Windows)
-    if platform.system() == "Windows":
-        base = os.environ.get('APPDATA', os.path.expanduser('~'))
-        return os.path.join(base, 'ha-tools', 'config.json')
-    else:
-        base = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
-        return os.path.join(base, 'ha-tools', 'config.json')
+    # By default, store config in a hidden .ha-tools-config folder in the same parent as automations/scripts
+    # Fallback to ~/.ha-tools-config/config.json if not set
+    base = os.environ.get('HA_TOOLS_CONFIG_BASE')
+    if not base:
+        # Try to infer from default automations/scripts location
+        default_config, default_automations, default_scripts = get_default_folders()
+        # Use the parent directory of automations/scripts if possible
+        parent = os.path.dirname(default_automations)
+        base = os.path.join(parent, '.ha-tools-config')
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, 'config.json')
 
 # Get the default folder structure for config, automations, and scripts
 def get_default_folders():

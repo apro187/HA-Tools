@@ -13,9 +13,24 @@ A collection of Python command-line tools for Home Assistant automation manageme
 All tools are in the `src/` directory. Each tool supports `--help` for CLI options.
 
 **Setup:**
-1. Place your Home Assistant `ha_config.json` (with `HA_URL` and `HA_TOKEN`) in your HA config directory.
-2. Use the `--ha-path` argument (or set the `HA_CONFIG_PATH` environment variable) to specify the path to your HA config directory for all tools.
-3. Optionally, use `--automations-dir` and/or `--scripts-dir` to map your local automations/scripts folders if they are not in the standard Home Assistant locations.
+1. Run the interactive setup script:
+   ```sh
+   python src/setup_ha_tools.py
+   ```
+   - Prompts for your Home Assistant URL, API token, and preferred directories for config, automations, and scripts.
+   - Stores secrets/config in a hidden `.ha-tools-config/config.json` folder in the parent directory of your automations/scripts (never in the project folder).
+   - You can override the config location by setting the `HA_TOOLS_CONFIG_BASE` environment variable.
+   - The setup script will display the exact config path after setup.
+
+2. Install requirements:
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+3. **Configuration is stored at:**
+   - By default: `.ha-tools-config/config.json` in the parent directory of your automations/scripts
+   - Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
+   - Never in the repo/project folder
 
 **Example: Push all automations/scripts to Home Assistant**
 
@@ -56,6 +71,15 @@ python src/get_ha_entities.py --ha-path /path/to/your/ha/config
 ## Development
 - Python 3.9+
 - Install dependencies: `pip install -r requirements.txt`
+
+## FAQ
+- **Where are my secrets/config stored?**
+  - By default, in `.ha-tools-config/config.json` in the parent directory of your automations/scripts (never in the project folder).
+  - You can override this location with the `HA_TOOLS_CONFIG_BASE` environment variable.
+- **How do I update my config?**
+  - Re-run `python src/setup_ha_tools.py` at any time.
+- **How do I contribute?**
+  - Fork the repo, make changes, and submit a pull request!
 
 ## License
 MIT
