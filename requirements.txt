@@ -1,0 +1,4 @@
+# requirements.txt for ha-tools
+requests
+websockets
+PyYAML
