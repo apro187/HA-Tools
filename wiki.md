@@ -1,189 +1,189 @@
 # Home Assistant Tools (ha-tools) Wiki
 
-Welcome to the ha-tools documentation! This wiki covers setup, configuration, and usage for all included scripts.
+> *A collection of small, opinionated Python utilities that make life with Home Assistant & YAML automations a little smoother.*
 
 ---
 
-## Table of Contents
-- [Setup & Configuration](#setup--configuration)
-- [Folder Structure](#folder-structure)
-- [Script Reference](#script-reference)
-  - [push_automation.py](#push_automationpy)
-  - [automation_watchdog.py](#automation_watchdogpy)
-  - [get_ha_entities.py](#get_ha_entitiespy)
-  - [get_recent_trace_errors.py](#get_recent_trace_errorspy)
-  - [generate_entity_state_doc.py](#generate_entity_state_docpy)
-  - [setup_ha_tools.py](#setup_ha_toolspy)
+## 🚀 Quick Start
 
----
+```bash
+# clone and jump in
+git clone https://github.com/apro187/HA-Tools.git && cd HA-Tools
 
-## Setup & Configuration
+# (optional) create & activate a virtual‑env
+python -m venv .venv && source .venv/bin/activate
 
-1. **Run the interactive setup:**
-   ```sh
-   python src/setup_ha_tools.py
-   ```
-   - Prompts for your Home Assistant URL, API token, and preferred directories for config, automations, and scripts.
-   - Stores secrets/config in a hidden `.ha-tools-config/config.json` folder in the parent directory of your automations/scripts (never in the project folder).
-   - You can override the config location by setting the `HA_TOOLS_CONFIG_BASE` environment variable.
-   - The setup script will display the exact config path after setup.
-   - Creates a default folder structure in `~/Documents/HA-Tools-Data` if you don't specify custom locations.
-   - Validates your Home Assistant connection and token before saving.
+# install local dependencies
+pip install -r requirements.txt
 
-2. **Install requirements:**
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-3. **Configuration is stored at:**
-   - By default: `.ha-tools-config/config.json` in the parent directory of your automations/scripts
-   - Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
-   - Never in the repo/project folder
-
----
-
-## Folder Structure
-
-- `src/` — All CLI tool scripts
-- `README.md`, `setup.py`, `requirements.txt` — Project metadata and dependencies
-- User config/secrets are **never** stored in the repo folder
-
-Default data folders (can be customized):
-- `~/Documents/HA-Tools-Data/config` — config files
-- `~/Documents/HA-Tools-Data/automations` — automations YAML
-- `~/Documents/HA-Tools-Data/scripts` — scripts YAML
-
----
-
-## Script Reference
-
-### push_automation.py
-Pushes Home Assistant automations and scripts to your HA instance via the REST API.
-
-**Usage:**
-```sh
-python src/push_automation.py --ha-path <HA_CONFIG_PATH> [--automations-dir <DIR>] [--scripts-dir <DIR>] [--push-file <YAML_FILE>] [--auto-overwrite]
+# first run: push an automation & reload HA
+python src/push_automation.py --file examples/my_automation.yaml --reload
 ```
 
-**Arguments:**
-- `--ha-path <HA_CONFIG_PATH>`: Path to the Home Assistant config directory (required)
-- `--automations-dir <DIR>`: Path to your automations YAML folder (optional)
-- `--scripts-dir <DIR>`: Path to your scripts YAML folder (optional)
-- `--push-file <YAML_FILE>`: Push a single automation/script YAML file
-- `--auto-overwrite`: Auto-accept all confirmation prompts
-
-**Features:**
-- Push all or individual YAML files
-- Lint YAML before pushing
-- Auto-overwrite with confirmation or flag
-- Custom folder mapping
+> **Tip:** once everything works locally, install with **pipx** so the CLIs are on your `$PATH`: `pipx install --editable .`
 
 ---
 
-### automation_watchdog.py
-Watches Home Assistant automations in real time and reports failures using the WebSocket API.
+## 📂 Repository Layout
 
-**Usage:**
-```sh
-python src/automation_watchdog.py --ha-path <HA_CONFIG_PATH> [--timeout SECONDS] [--include a,b] [--exclude x,y]
+| Path                  | Purpose                               |
+| --------------------- | ------------------------------------- |
+| `src/`                | All CLI scripts & helpers             |
+| `examples/`           | Sample YAML/JSON you can test against |
+| `.vscode/launch.json` | Handy debug profiles                  |
+| `tests/`              | Pytest suite (work‑in‑progress)       |
+
+---
+
+## 🛠️ Tool Reference
+
+Each script has its own page with **overview → arguments → examples → Home Assistant recipe → troubleshooting**. Click through or use the sidebar.
+
+| Script                         | Purpose                                                | Wiki page                        |
+| ------------------------------ | ------------------------------------------------------ | -------------------------------- |
+| `push_automation.py`           | Push a local YAML automation to HA & optionally reload | [[push_automation]]              |
+| `automation_watchdog.py`       | Tails HA trace logs, alerts when a run fails           | [[automation_watchdog]]          |
+| `get_ha_entities.py`           | Dump entity list to CSV/Markdown                       | [[get_ha_entities]]              |
+| `get_recent_trace_errors.py`   | Find scripts/automations that blew up recently         | [[get_recent_trace_errors]]      |
+| `generate_entity_state_doc.py` | Snapshot current states into a doc                     | [[generate_entity_state_doc]]    |
+
+> **Adding a new script?**  Copy the template at the bottom of this page → rename → add a row here so it shows up.
+
+---
+
+## 🔄 Typical Workflows
+
+1. **Edit YAML locally** → `push_automation.py` → HA reloads → success / error notification via **automation_watchdog.py**.
+2. **Nightly cron** runs `get_recent_trace_errors.py` and emails you the failures from the past 24 h.
+3. **Documentation refresh**: `generate_entity_state_doc.py --md docs/entities.md` before a big refactor.
+
+---
+
+## 🧩 Architecture at a Glance
+
+```mermaid
+graph LR
+    subgraph CLI
+        A[push_automation] -- REST /api/config/... --> B(Home Assistant API)
+        C[automation_watchdog] -- WebSocket /api/websocket --> B
+    end
+    B --> D[Automations / Scripts]
+    D -->|Trace JSON| E[Trace DB]
 ```
 
-**Arguments:**
-- `--ha-path <HA_CONFIG_PATH>`: Path to the Home Assistant config directory (required)
-- `--timeout SECONDS`: Seconds to wait before fetching trace (default: 3)
-- `--include a,b`: Comma-separated list of automations to watch
-- `--exclude x,y`: Comma-separated list of automations to ignore
+---
 
-**Features:**
-- Real-time error reporting
-- Filter by automation entity_id
+## 🔐 Configuration File
+
+- By default: `.ha-tools-config/config.json` in the parent directory of your automations/scripts
+- Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
+- Never in the repo/project folder
+
+**Config file structure:**
+The `config.json` file is a simple JSON object with the following keys:
+
+```json
+{
+  "HA_URL": "<your Home Assistant URL>",
+  "HA_TOKEN": "<your long-lived access token>",
+  "HA_PATH": "<path to your Home Assistant config directory>",
+  "AUTOMATIONS_DIR": "<path to your automations directory>",
+  "SCRIPTS_DIR": "<path to your scripts directory>"
+}
+```
+- All fields are set by the setup script and can be updated by re-running it.
+- `AUTOMATIONS_DIR` and `SCRIPTS_DIR` may be blank if you use default locations.
 
 ---
 
-### get_ha_entities.py
-Fetches all Home Assistant entities and their states via the REST API and writes them to ha_entities.json.
+## ❓ Troubleshooting & FAQ
 
-**Usage:**
-```sh
-python src/get_ha_entities.py --ha-path <HA_CONFIG_PATH> [--automations-dir <DIR>] [--scripts-dir <DIR>]
+| Symptom                                  | Likely Cause                      | Fix                                                        |
+| ---------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| `401 Unauthorized` when calling API      | Wrong long‑lived access token     | Create a new token in HA → update `HA_TOOLS_TOKEN` env var |
+| `400 Bad Request` pushing YAML           | YAML did not pass HA config‑check | Run `ha core check` locally; fix linting errors            |
+| Nothing happens when watchdog is running | Your HA event stream is quiet     | Trigger an automation manually to test                     |
+
+---
+
+## 🤝 Contributing (future‑proofing)
+
+- **Linting**: `ruff check src tests`
+- **Commits**: Conventional Commits (`feat:`, `fix:`…)
+- **CI**: planned GitHub Action to run tests + publish wiki.
+
+---
+
+# TEMPLATE_script_page.md
+
+> Copy → rename to the script’s filename (minus `.py`) when adding a new page.
+
+````markdown
+# {script_name}.py
+
+## Overview
+Brief one‑liner explaining _what problem this solves_.
+
+## Usage
+```bash
+python src/{script_name}.py [OPTIONS]
 ```
 
-**Arguments:**
-- `--ha-path <HA_CONFIG_PATH>`: Path to the Home Assistant config directory (required)
-- `--automations-dir <DIR>`: Path to your automations YAML folder (optional)
-- `--scripts-dir <DIR>`: Path to your scripts YAML folder (optional)
+| Option     | Type | Default                           | Description                  |
+| ---------- | ---- | --------------------------------- | ---------------------------- |
+| `--ha-url` | str  | `http://homeassistant.local:8123` | Base URL of your HA instance |
+| `--token`  | str  | env `HA_TOOLS_TOKEN`              | Long‑lived access token      |
+| …          |      |                                   |                              |
 
-**Features:**
-- Fetches all entity states and attributes
-- Saves to ha_entities.json for use by other tools
+> Tip: run `python src/{script_name}.py --help` to see the full list.
 
----
+## Example
 
-### get_recent_trace_errors.py
-Fetches recent Home Assistant automation/script trace errors using the WebSocket API.
-
-**Usage:**
-```sh
-python src/get_recent_trace_errors.py --ha-path <HA_CONFIG_PATH> [--minutes N] [--automations-dir <DIR>] [--scripts-dir <DIR>]
+```bash
+python src/{script_name}.py --some-flag value
 ```
 
-**Arguments:**
-- `--ha-path <HA_CONFIG_PATH>`: Path to the Home Assistant config directory (required)
-- `--minutes N`: How many minutes back to check for errors (default: 10)
-- `--automations-dir <DIR>`: Path to your automations YAML folder (optional)
-- `--scripts-dir <DIR>`: Path to your scripts YAML folder (optional)
+### Sample output
 
-**Features:**
-- Reports errors found in the last N minutes
-- Uses WebSocket API for trace data
-
----
-
-### generate_entity_state_doc.py
-Generates documentation for observed Home Assistant entity states based on ha_entities.json.
-
-**Usage:**
-```sh
-python src/generate_entity_state_doc.py --ha-path <HA_CONFIG_PATH> [--automations-dir <DIR>] [--scripts-dir <DIR>]
+```
+<terminal output here>
 ```
 
-**Arguments:**
-- `--ha-path <HA_CONFIG_PATH>`: Path to the Home Assistant config directory (required)
-- `--automations-dir <DIR>`: Path to your automations YAML folder (optional)
-- `--scripts-dir <DIR>`: Path to your scripts YAML folder (optional)
+## Home Assistant automation/snippet
 
-**Features:**
-- Compares observed states to known domain states
-- Outputs custom/unknown states by entity and domain
-
----
-
-### setup_ha_tools.py
-Interactive setup script for ha-tools. Prompts for Home Assistant URL, API token, and local automations/scripts directories.
-
-**Usage:**
-```sh
-python src/setup_ha_tools.py
+```yaml
+alias: Example that calls {script_name}
+mode: single
+trigger:
+  - platform: state
+    entity_id: binary_sensor.front_door
+    to: 'on'
+action:
+  - service: python_script.{script_name}
 ```
 
-**Features:**
-- Prompts for all required info
-- Validates connection and token
-- Creates default folders if needed
-- Stores config securely in a hidden `.ha-tools-config` folder in the parent directory of your automations/scripts (never in the project folder)
-- You can override the config location with the `HA_TOOLS_CONFIG_BASE` environment variable
+## Troubleshooting
+
+| Error | Hint |
+| ----- | ---- |
+| …     | …    |
 
 ---
 
-## FAQ
-- **Where are my secrets/config stored?**
-  - By default, in `.ha-tools-config/config.json` in the parent directory of your automations/scripts (never in the project folder).
-  - You can override this location with the `HA_TOOLS_CONFIG_BASE` environment variable.
-- **How do I update my config?**
-  - Re-run `python src/setup_ha_tools.py` at any time.
-- **How do I contribute?**
-  - Fork the repo, make changes, and submit a pull request!
+## Changelog
+
+- **v0.1** – initial version
+
+```
 
 ---
 
-For more, see the [README.md](../README.md) or open an issue on GitHub.
+# How to Publish These Pages Automatically
+
+1. Keep all wiki Markdown inside `docs/wiki_src/` in the repo.  
+2. Add a GitHub Action that, on `main`, copies the folder to `gh-pages` → pushes to the Wiki using a bot token.  
+3. Or keep your existing shell script – the folder structure above will still work.
+
+---
+
+*Last updated: June 30, 2025*
