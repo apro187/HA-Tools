@@ -3,6 +3,11 @@ import json
 import requests
 import yaml
 
+# Get the path to the config file
+def get_config_path():
+    config_base = os.environ.get('HA_TOOLS_CONFIG_BASE', os.path.expanduser('~/Documents/HA-Tools/config'))
+    return os.path.join(config_base, 'config.json')
+
 # Get the default folder structure for config, automations, scripts, logs, and prints
 def get_default_folders():
     base = os.path.expanduser('~/Documents/HA-Tools')
@@ -12,13 +17,6 @@ def get_default_folders():
     logs = os.path.join(base, 'logs')
     prints = config  # Prints go directly in the config folder
     return base, config, automations, scripts, logs, prints
-
-# Get the path to the config file
-def get_config_path():
-    base, config_dir, _, _, _, _ = get_default_folders()
-    # Check for environment variable override
-    config_base = os.environ.get('HA_TOOLS_CONFIG_BASE', config_dir)
-    return os.path.join(config_base, 'config.json')
 
 # Load the config file
 def get_config():

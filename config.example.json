@@ -1,0 +1,8 @@
+{
+  "ha_url": "http://homeassistant.local:8123",
+  "ha_token": "YOUR_LONG_LIVED_ACCESS_TOKEN",
+  "automations_dir": "/path/to/your/private/automations/repo",
+  "scripts_dir": "/path/to/your/private/scripts/repo",
+  "logs_dir": "~/Documents/HA-Tools/logs",
+  "config_dir": "~/Documents/HA-Tools/config"
+}
