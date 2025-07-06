@@ -9,6 +9,25 @@ A collection of Python command-line tools for Home Assistant automation manageme
 - Watchdog for automation health
 - Designed for cross-platform use (macOS/Linux/Windows)
 
+## Getting Started
+
+1.  **Prerequisites**:
+    *   Python 3.9+
+    *   Git
+2.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/apro187/HA-Tools.git
+    cd HA-Tools
+    ```
+3.  **Install the tools**:
+    ```bash
+    pip install .
+    ```
+4.  **Run the interactive setup**:
+    ```bash
+    setup-ha-tools
+    ```
+
 ## Streamlined Workflow
 
 The recommended workflow is to use Git to manage your automations and scripts:
@@ -36,32 +55,12 @@ The recommended workflow is to use Git to manage your automations and scripts:
 
 ## Usage
 
-
 All tools are installed as CLI commands after running `pip install .` in this directory. Each tool supports `--help` for CLI options.
 
-
-**Setup:**
-
-1. Run the interactive setup script:
-   ```sh
-   setup-ha-tools
-   ```
-   - Prompts for your Home Assistant URL, API token, and preferred directories for config, automations, and scripts.
-   - Creates the folders (`config/`, `automations/`, `scripts/`, `logs/`) if they don't exist.
-   - After setup, automatically pulls all automations and scripts from your Home Assistant instance and saves them locally.
-   - Stores secrets/config in `config/config.json` under `~/Documents/HA-Tools` by default (never in the project folder).
-   - You can override the config location by setting the `HA_TOOLS_CONFIG_BASE` environment variable.
-   - The setup script will display the exact config path after setup.
-
-2. Install requirements:
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-3. **Configuration is stored at:**
-   - By default: `config/config.json` in your `~/Documents/HA-Tools` directory
-   - Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
-   - Never in the repo/project folder
+**Configuration is stored at:**
+- By default: `config/config.json` in your `~/Documents/HA-Tools` directory
+- Or as set by the `HA_TOOLS_CONFIG_BASE` environment variable
+- Never in the repo/project folder
 
 **Example: Push all automations/scripts to Home Assistant**
 
@@ -114,7 +113,7 @@ get-ha-entities --ha-path /path/to/your/ha/config
 
 ## Development
 - Python 3.9+
-- Install dependencies: `pip install -r requirements.txt` or `pip install .` to install CLI tools
+- Install dependencies: `pip install .` to install CLI tools
 
 ## FAQ
 - **Where are my secrets/config stored?**
