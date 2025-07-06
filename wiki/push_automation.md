@@ -11,9 +11,7 @@ push-automation [OPTIONS]
 
 | Option                | Type   | Default      | Description                                 |
 |-----------------------|--------|--------------|---------------------------------------------|
-| `--ha-path`           | str    | (required)   | Path to your Home Assistant config directory |
-| `--automations-dir`   | str    | (optional)   | Path to your automations YAML folder         |
-| `--scripts-dir`       | str    | (optional)   | Path to your scripts YAML folder             |
+| `--auto-detect-changes` | flag   | false        | Automatically push all changed YAML files since the last git commit. |
 | `--push-file`         | str    | (optional)   | Push a single automation/script YAML file    |
 | `--auto-overwrite`    | flag   | false        | Auto-accept all confirmation prompts         |
 
@@ -23,14 +21,14 @@ push-automation [OPTIONS]
 
 
 ```bash
-push-automation --ha-path ~/ha-config --automations-dir ~/automations --scripts-dir ~/scripts --push-file my_automation.yaml --auto-overwrite
+push-automation --auto-detect-changes
 ```
 
 ### Sample output
 
 ```
 Pushed automation: my_automation.yaml
-Reloaded automations.
+Pushed script: my_script.yaml
 ```
 
 ## Home Assistant automation/snippet
@@ -43,7 +41,7 @@ trigger:
     entity_id: input_boolean.push_automation
     to: 'on'
 action:
-  - service: python_script.push_automation
+  - service: shell_command.push_automation
 ```
 
 ## Troubleshooting
@@ -52,8 +50,10 @@ action:
 |----------------------|--------------------------------------|
 | No YAML files found  | Check your automations/scripts paths  |
 | 401 Unauthorized     | Check your HA token in config.json    |
+| Not a git repository | Initialize a git repository in your HA-Tools directory |
 
 ---
 
 ## Changelog
+- **v0.2** – Added --auto-detect-changes flag
 - **v0.1** – initial version

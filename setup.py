@@ -10,7 +10,8 @@ setup(
     install_requires=[
         "requests",
         "websockets",
-        "PyYAML"
+        "PyYAML",
+        "GitPython"
     ],
     entry_points={
         "console_scripts": [
@@ -21,6 +22,7 @@ setup(
             "automation-watchdog=automation_watchdog:main",
             "decompose-automations=decompose_automations:main",
             "setup-ha-tools=setup_ha_tools:main",
+            "pull-automations=pull_automations:main",
         ]
     },
     python_requires=">=3.9",

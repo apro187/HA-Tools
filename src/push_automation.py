@@ -4,108 +4,141 @@ push_automation.py
 
 Pushes Home Assistant automations and scripts to your HA instance via the REST API.
 
-- Supports pushing all YAML files in automations/scripts folders, or a single file.
+- Supports pushing all YAML files in automations/scripts folders, a single file,
+  or auto-detecting changes since the last git commit.
 - Can auto-overwrite existing automations/scripts with confirmation or --auto-overwrite flag.
-- Supports custom folder mapping for automations and scripts.
 - Lints YAML before pushing and checks for existing entities.
-
-Usage:
-  python push_automation.py --ha-path <HA_CONFIG_PATH> [--automations-dir <DIR>] [--scripts-dir <DIR>] [--push-file <YAML_FILE>] [--auto-overwrite]
-
-Arguments:
-  --ha-path <HA_CONFIG_PATH>   Path to the Home Assistant config directory (required)
-  --automations-dir <DIR>      Path to your automations YAML folder (optional)
-  --scripts-dir <DIR>          Path to your scripts YAML folder (optional)
-  --push-file <YAML_FILE>      Push a single automation/script YAML file
-  --auto-overwrite             Auto-accept all confirmation prompts
-
-Requires: requests, PyYAML
 """
 import os
 import glob
 import yaml
 import json
 import requests
-import re
-from pathlib import Path
 import argparse
+from pathlib import Path
+import git
+from ha_helpers.common import get_config, get_config_path
 
 # Global flag for auto-overwrite
 AUTO_OVERWRITE = False
 
-# Replace all hardcoded paths with ha_path argument
-
 def print_error(msg):
     print(f"\033[91m{msg}\033[0m")
 
-def get_automation_files(directory):
-    return glob.glob(os.path.join(directory, '*.yaml'))
+def get_changed_yaml_files():
+    """Returns a list of changed YAML files since the last commit."""
+    try:
+        repo = git.Repo(search_parent_directories=True)
+        
+        # Compare against the last commit to get all changes (staged and unstaged)
+        changed_files = [
+            item.b_path for item in repo.head.commit.diff(None) 
+            if item.b_path and item.b_path.endswith(('.yaml', '.yml'))
+        ]
+        untracked_files = [f for f in repo.untracked_files if f.endswith(('.yaml', '.yml'))]
+        
+        all_changed = set(changed_files + untracked_files)
+        if not all_changed:
+            print("No changed YAML files detected since last commit.")
+            return []
 
-def get_yaml_files_from_dirs(dirs, automations_dir=None, scripts_dir=None):
-    files = []
-    for d in dirs:
-        if os.path.isdir(d):
-            # If user specifies automations_dir or scripts_dir, use those
-            if automations_dir and os.path.abspath(d) == os.path.abspath(automations_dir):
-                files.extend(glob.glob(os.path.join(d, '*.yaml')))
-            elif scripts_dir and os.path.abspath(d) == os.path.abspath(scripts_dir):
-                files.extend(glob.glob(os.path.join(d, '*.yaml')))
-            else:
-                # Standard Home Assistant: automations in 'automations', scripts in 'scripts'
-                for sub in ['automations', 'automation', 'scripts']:
-                    subdir = os.path.join(d, sub)
-                    if os.path.isdir(subdir):
-                        files.extend(glob.glob(os.path.join(subdir, '*.yaml')))
-                # Also add any YAMLs in the folder itself
-                files.extend(glob.glob(os.path.join(d, '*.yaml')))
-        elif os.path.isfile(d) and d.endswith('.yaml'):
-            files.append(d)
-    return files
+        # Return full paths
+        return [os.path.join(repo.working_dir, f) for f in all_changed]
+    except git.InvalidGitRepositoryError:
+        print_error(f"Error: The current directory is not a Git repository.")
+        return []
+    except Exception as e:
+        print_error(f"An error occurred while detecting git changes: {e}")
+        return []
 
-def load_ha_config(ha_path):
-    # Look for config.json in ~/Documents/HA-Tools/config/config.json by default
-    default_config = os.path.expanduser('~/Documents/HA-Tools/config/config.json')
-    config_path = os.path.join(ha_path, 'config.json') if os.path.exists(os.path.join(ha_path, 'config.json')) else default_config
-    if not os.path.exists(config_path):
-        print_error(f"Config file not found at {config_path}")
-        exit(1)
-    with open(config_path, 'r') as f:
-        return json.load(f)
+def push_file(filepath, ha_config, auto_overwrite=False):
+    """Pushes a single automation or script file to Home Assistant."""
+    try:
+        with open(filepath, 'r') as f:
+            content = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        print_error(f"Error reading YAML file {filepath}: {e}")
+        return
+    except FileNotFoundError:
+        print_error(f"File not found: {filepath}")
+        return
+
+    if not isinstance(content, dict) or ('id' not in content and 'alias' not in content):
+        print_error(f"Invalid format in {filepath}. Each automation/script must be a dictionary with an 'id' or 'alias'.")
+        return
+
+    entity_id = content.get('id', content.get('alias', '').lower().replace(' ', '_'))
+    if not entity_id:
+        print_error(f"Could not determine entity ID for {filepath}")
+        return
+
+    # Determine if it's an automation or script
+    is_automation = 'trigger' in content
+    is_script = 'sequence' in content and not is_automation
+    if not is_automation and not is_script:
+        print(f"Skipping {filepath} as it does not appear to be an automation or script.")
+        return
+        
+    entity_type = 'automation' if is_automation else 'script'
+    api_path = f"/api/config/{entity_type}/config/{entity_id}"
+    url = f"{ha_config['HA_URL']}{api_path}"
+    headers = {"Authorization": f"Bearer {ha_config['HA_TOKEN']}", "Content-Type": "application/json"}
+
+    # Check if entity exists
+    try:
+        resp = requests.get(url, headers=headers)
+        exists = resp.status_code == 200
+
+        if exists and not auto_overwrite:
+            overwrite = input(f"'{entity_id}' already exists. Overwrite? [y/N] ").lower()
+            if overwrite != 'y':
+                print(f"Skipped {entity_id}.")
+                return
+
+        # Push the automation/script
+        resp = requests.post(url, headers=headers, data=json.dumps(content))
+        resp.raise_for_status()
+        print(f"Successfully pushed {entity_type}: {entity_id}")
+
+    except requests.exceptions.RequestException as e:
+        print_error(f"Error pushing {entity_id}: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Push Home Assistant automations/scripts to your HA instance.")
-    parser.add_argument('--ha-path', type=str, default=os.path.expanduser('~/Documents/HA-Tools/config'),
-                        help='Path to Home Assistant config directory (default: ~/Documents/HA-Tools/config)')
-    parser.add_argument('--automations-dir', type=str, help='Path to your automations YAML folder (optional)')
-    parser.add_argument('--scripts-dir', type=str, help='Path to your scripts YAML folder (optional)')
-    parser.add_argument('--push-file', type=str, help='Push a single automation/script YAML file')
-    parser.add_argument('--auto-overwrite', action='store_true', help='Auto-accept all confirmation prompts')
+    parser = argparse.ArgumentParser(description="Push Home Assistant automations/scripts.")
+    parser.add_argument('--push-file', type=str, help='Push a single automation/script YAML file.')
+    parser.add_argument('--auto-overwrite', action='store_true', help='Auto-accept all confirmation prompts.')
+    parser.add_argument('--auto-detect-changes', action='store_true', help='Automatically push all changed YAML files since the last git commit.')
     args = parser.parse_args()
 
     global AUTO_OVERWRITE
     AUTO_OVERWRITE = args.auto_overwrite
 
-    ha_path = args.ha_path
-    ha_config = load_ha_config(ha_path)
-
-    automations_dir = args.automations_dir or ha_config.get('AUTOMATIONS_DIR') or os.path.expanduser('~/Documents/HA-Tools/automations')
-    scripts_dir = args.scripts_dir or ha_config.get('SCRIPTS_DIR') or os.path.expanduser('~/Documents/HA-Tools/scripts')
-
-    if args.push_file:
-        push_file_quiet(args.push_file, auto_overwrite=AUTO_OVERWRITE, ha_path=ha_path)
+    try:
+        ha_config = get_config()
+    except FileNotFoundError as e:
+        print_error(e)
         return
 
-    # Use automations_dir and scripts_dir as sources
-    src_dirs = [automations_dir, scripts_dir]
-    files = get_yaml_files_from_dirs(src_dirs, automations_dir=automations_dir, scripts_dir=scripts_dir)
-    if not files:
-        print_error("No YAML files found.")
+    files_to_push = []
+    if args.auto_detect_changes:
+        files_to_push = get_changed_yaml_files()
+    elif args.push_file:
+        files_to_push.append(args.push_file)
+    else:
+        # Default behavior: push all files from configured directories
+        automations_dir = ha_config.get('AUTOMATIONS_DIR')
+        scripts_dir = ha_config.get('SCRIPTS_DIR')
+        if automations_dir:
+            files_to_push.extend(glob.glob(os.path.join(automations_dir, '*.yaml')))
+        if scripts_dir:
+            files_to_push.extend(glob.glob(os.path.join(scripts_dir, '*.yaml')))
+
+    if not files_to_push:
+        print("No files to push.")
         return
 
-def push_file_quiet(filepath, auto_overwrite=False, ha_path=None):
-    if not ha_path:
-        ha_path = os.environ.get('HA_CONFIG_PATH')
-    if not ha_path:
-        print_error('You must specify --ha-path or set the HA_CONFIG_PATH environment variable.')
-        exit(1)
-    ha_config = load_ha_config(ha_path)
+    for f in files_to_push:
+        push_file(f, ha_config, auto_overwrite=AUTO_OVERWRITE)
+
+if __name__ == "__main__":
+    main()

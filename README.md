@@ -4,9 +4,35 @@ A collection of Python command-line tools for Home Assistant automation manageme
 
 ## Features
 - Push automations/scripts to Home Assistant with CLI
+- Pull automations/scripts from Home Assistant
 - Fetch and analyze trace errors
 - Watchdog for automation health
 - Designed for cross-platform use (macOS/Linux/Windows)
+
+## Streamlined Workflow
+
+The recommended workflow is to use Git to manage your automations and scripts:
+
+1.  **Pull Changes from Home Assistant:**
+    ```bash
+    pull-automations
+    ```
+2.  **Commit the Pulled Changes:**
+    ```bash
+    git add .
+    git commit -m "Sync automations from Home Assistant"
+    ```
+3.  **Edit Your Automations:**
+    *   Make your desired changes to your automation and script files in your IDE.
+4.  **Commit Your Changes:**
+    ```bash
+    git add .
+    git commit -m "feat: add new thermostat automation"
+    ```
+5.  **Push Your Changes to Home Assistant:**
+    ```bash
+    push-automation --auto-detect-changes
+    ```
 
 ## Usage
 
@@ -41,11 +67,19 @@ All tools are installed as CLI commands after running `pip install .` in this di
 
 
 ```sh
-push-automation --ha-path /path/to/your/ha/config --automations-dir /path/to/your/automations --scripts-dir /path/to/your/scripts
+push-automation --auto-detect-changes
 ```
 
-- If you do not specify `--automations-dir` or `--scripts-dir`, the tool will look for `automations/` and `scripts/` subfolders under your config.
-- You can also push a single file with `--push-file`.
+- The `--auto-detect-changes` flag will automatically find all changed YAML files since the last git commit and push them.
+- You can also push all files in the configured directories by running `push-automation` without any flags.
+- To push a single file, use `push-automation --push-file /path/to/your/file.yaml`.
+
+**Example: Pull all automations/scripts from Home Assistant**
+
+```sh
+pull-automations
+```
+- This will pull all automations and scripts from your Home Assistant instance and save them to your configured local directories.
 
 **Example: Watch automations for failures**
 

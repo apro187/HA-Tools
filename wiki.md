@@ -45,6 +45,7 @@ Each script has its own page with **overview → arguments → examples → Home
 | Script                         | Purpose                                                | Wiki page                        |
 | ------------------------------ | ------------------------------------------------------ | -------------------------------- |
 | `push_automation.py`           | Push a local YAML automation to HA & optionally reload | [[push_automation]]              |
+| `pull_automations.py`          | Pull automations/scripts from HA                       | [[pull_automations]]             |
 | `automation_watchdog.py`       | Tails HA trace logs, alerts when a run fails           | [[automation_watchdog]]          |
 | `get_ha_entities.py`           | Dump entity list to CSV/Markdown                       | [[get_ha_entities]]              |
 | `get_recent_trace_errors.py`   | Find scripts/automations that blew up recently         | [[get_recent_trace_errors]]      |
@@ -56,9 +57,10 @@ Each script has its own page with **overview → arguments → examples → Home
 
 ## 🔄 Typical Workflows
 
-1. **Edit YAML locally** → `push_automation.py` → HA reloads → success / error notification via **automation_watchdog.py**.
-2. **Nightly cron** runs `get_recent_trace_errors.py` and emails you the failures from the past 24 h.
-3. **Documentation refresh**: `generate_entity_state_doc.py --md docs/entities.md` before a big refactor.
+1. **Pull changes from HA:** `pull-automations`
+2.  **Edit YAML locally** → `push_automation.py --auto-detect-changes` → HA reloads → success / error notification via **automation_watchdog.py**.
+3.  **Nightly cron** runs `get_recent_trace_errors.py` and emails you the failures from the past 24 h.
+4.  **Documentation refresh**: `generate_entity_state_doc.py --md docs/entities.md` before a big refactor.
 
 ---
 
@@ -69,9 +71,10 @@ graph LR
     subgraph CLI
         A[push_automation] -- REST /api/config/... --> B(Home Assistant API)
         C[automation_watchdog] -- WebSocket /api/websocket --> B
+        D[pull_automations] -- REST /api/config/... --> B
     end
-    B --> D[Automations / Scripts]
-    D -->|Trace JSON| E[Trace DB]
+    B --> E[Automations / Scripts]
+    E -->|Trace JSON| F[Trace DB]
 ```
 
 ---
@@ -196,4 +199,4 @@ action:
 
 ---
 
-*Last updated: June 30, 2025*
+*Last updated: July 5, 2025*

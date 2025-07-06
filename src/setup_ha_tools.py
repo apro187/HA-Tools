@@ -11,6 +11,7 @@ import sys
 from urllib.parse import urlparse
 import requests
 import platform
+from ha_helpers.common import get_default_folders, pull_and_save_ha_items
 
 # Prompt the user for input, with optional default and required flag
 def prompt(msg, default=None, required=True):
@@ -51,17 +52,6 @@ def get_default_secrets_path():
         base = config_dir
     os.makedirs(base, exist_ok=True)
     return os.path.join(base, 'config.json')
-
-# Get the default folder structure for config, automations, scripts, logs, and prints
-
-def get_default_folders():
-    base = os.path.expanduser('~/Documents/HA-Tools')
-    config = os.path.join(base, 'config')
-    automations = os.path.join(base, 'automations')
-    scripts = os.path.join(base, 'scripts')
-    logs = os.path.join(base, 'logs')
-    prints = config  # Prints go directly in the config folder
-    return base, config, automations, scripts, logs, prints
 
 # Main interactive setup logic
 
@@ -156,38 +146,11 @@ def main():
         print(f"Prints directory: {prints_dir}")
 
     # --- Initial Pull of Automations and Scripts from Home Assistant ---
-    import requests
-    def pull_and_save_ha_items(item_type, api_path, save_dir):
-        headers = {"Authorization": f"Bearer {ha_token}", "Content-Type": "application/json"}
-        url = f"{ha_url}{api_path}"
-        try:
-            resp = requests.get(url, headers=headers)
-            resp.raise_for_status()
-            items = resp.json()
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir, exist_ok=True)
-            count = 0
-            for item in items:
-                # Use the entity_id or id as filename
-                entity_id = item.get('id') or item.get('entity_id') or f"{item_type}_{count}"
-                # Clean filename
-                fname = str(entity_id).replace('.', '_').replace(' ', '_') + ".yaml"
-                fpath = os.path.join(save_dir, fname)
-                # Save as YAML
-                try:
-                    import yaml
-                    with open(fpath, 'w') as f:
-                        yaml.dump(item, f, default_flow_style=False, allow_unicode=True)
-                    count += 1
-                except Exception as e:
-                    print(f"Failed to save {item_type} {entity_id}: {e}")
-            print(f"Pulled and saved {count} {item_type}(s) to {save_dir}")
-        except Exception as e:
-            print(f"Error pulling {item_type}s from Home Assistant: {e}")
-
     print("\nPulling automations and scripts from Home Assistant...")
-    pull_and_save_ha_items('automation', '/api/config/automation/config', automations_dir)
-    pull_and_save_ha_items('script', '/api/config/script/config', scripts_dir)
+    if automations_dir:
+        pull_and_save_ha_items('automation', '/api/config/automation/config', automations_dir, ha_url, ha_token)
+    if scripts_dir:
+        pull_and_save_ha_items('script', '/api/config/script/config', scripts_dir, ha_url, ha_token)
 
     print("\nSetup complete! You can now use ha-tools with your configuration.")
     print("\nExample usage:")
