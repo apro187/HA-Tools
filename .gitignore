@@ -15,4 +15,5 @@ dist/
 .vscode/
 *.log
 # Add to .gitignore to ensure secrets/config are never committed
-ha-tools/
+# The config file is stored outside of the repository, so it is not necessary to ignore it.
+HA-Tools-Private/
