@@ -69,7 +69,7 @@ All tools are installed as CLI commands after running `pip install .` in this di
 push-automation --auto-detect-changes
 ```
 
-- The `--auto-detect-changes` flag will automatically find all changed YAML files since the last git commit and push them.
+- The `--auto-detect-changes` flag will automatically find all YAML files that were part of the *last Git commit* and push them. **Ensure your changes are committed before using this flag.**
 - You can also push all files in the configured directories by running `push-automation` without any flags.
 - To push a single file, use `push-automation --push-file /path/to/your/file.yaml`.
 

@@ -30,22 +30,35 @@ def get_changed_yaml_files():
     try:
         repo = git.Repo(search_parent_directories=True)
         
-        # Compare against the last commit to get all changes (staged and unstaged)
-        changed_files = [
-            item.b_path for item in repo.head.commit.diff(None) 
-            if item.b_path and item.b_path.endswith(('.yaml', '.yml'))
-        ]
-        untracked_files = [f for f in repo.untracked_files if f.endswith(('.yaml', '.yml'))]
+        # Compare HEAD with HEAD~1 to get only files changed in the last commit
+        # This assumes the user has already committed their changes.
+        if len(repo.heads) == 0:
+            print("No commits found in the repository.")
+            return []
         
-        all_changed = set(changed_files + untracked_files)
-        if not all_changed:
-            print("No changed YAML files detected since last commit.")
+        if len(repo.heads[0].commit.parents) == 0:
+            print("Only one commit found. Cannot compare with previous commit.")
+            return []
+
+        diff_index = repo.head.commit.diff(repo.head.commit.parents[0])
+        
+        changed_files = []
+        for item in diff_index:
+            if item.change_type in ('A', 'M', 'R'): # Added, Modified, Renamed
+                if item.b_path and item.b_path.endswith(('.yaml', '.yml')):
+                    changed_files.append(item.b_path)
+            elif item.change_type == 'D': # Deleted
+                # We don't push deleted files, but we might want to log them or handle them differently
+                pass
+        
+        if not changed_files:
+            print("No new YAML files detected in the last commit.")
             return []
 
         # Return full paths
-        return [os.path.join(repo.working_dir, f) for f in all_changed]
+        return [os.path.join(repo.working_dir, f) for f in changed_files]
     except git.InvalidGitRepositoryError:
-        print_error(f"Error: The current directory is not a Git repository.")
+        print_error(f"Error: The current directory is not a Git repository. Please run this script from within your automations/scripts repository.")
         return []
     except Exception as e:
         print_error(f"An error occurred while detecting git changes: {e}")

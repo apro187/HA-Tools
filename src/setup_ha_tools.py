@@ -42,18 +42,26 @@ def main():
     try:
         shutil.copy(source_config_path, dest_config_path)
         print(f"Successfully copied config template to {dest_config_path}")
-        print("\n--- Next Steps ---")
-        print("1. Create a new PRIVATE Git repository to store your automations and scripts.")
-        print("2. Clone the private repository to your local machine.")
-        print(f"3. Open {dest_config_path} and update the following fields:")
-        print("   - ha_url: Your Home Assistant URL (e.g., http://homeassistant.local:8123)")
-        print("   - ha_token: Your Long-Lived Access Token.")
-        print("   - automations_dir: The local path to your private automations repository.")
-        print("   - scripts_dir: The local path to your private scripts repository.")
+
+        # Load the copied config file
+        with open(dest_config_path, 'r') as f:
+            config = json.load(f)
+
+        # Prompt user for configuration details
+        config['ha_url'] = input("Enter your Home Assistant URL (e.g., http://homeassistant.local:8123): ")
+        config['ha_token'] = input("Enter your Long-Lived Access Token: ")
+        config['automations_dir'] = input("Enter the local path to your private automations repository: ")
+        config['scripts_dir'] = input("Enter the local path to your private scripts repository: ")
+
+        # Save the updated config file
+        with open(dest_config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+
+        print(f"\nSuccessfully updated configuration in {dest_config_path}")
         print("\nSetup complete! You can now use ha-tools with your configuration.")
 
     except FileNotFoundError:
-        print(f"Error: config.example.json not found.")
+        print(f"Error: config.example.json not found or config.json could not be accessed.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
